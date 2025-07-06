@@ -1,10 +1,16 @@
-# React + Vite
+// PLEASE FOLLOW FOLLOWING INSTRUCTIONS 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Fisrt Setup MongoDB credentials in .env file in backend folder  
 
-Currently, two official plugins are available:
+## to run this project use :
+1) npm run dev 
+2) cd backend 
+3) node index.js
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-"# yantrik_club_final" 
-"# yantrik" 
+
+// For final Build use 
+npm run build 
+
+// To access the admin panel :
+
+http://localhost:5000/admin_panel 
