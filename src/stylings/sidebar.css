@@ -1,0 +1,177 @@
+/* General sidebar styling */
+.sidebar {
+  position: fixed;
+  top: 2vh;
+  left: 2vh;
+  height: 96vh;
+  width: 60px;
+  background: linear-gradient(to bottom, orangered, orange);
+  color: #fff;
+  padding: 20px 10px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  transition: width 0.4s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  opacity: 0.8;
+  border-radius: 10px;
+}
+
+.sidebar:hover {
+  width: 120px;
+  opacity: 0.8;
+}
+
+.sidebar ul {
+  display: flex;
+  flex-direction: column;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  justify-content: space-evenly;
+}
+
+.sidebar ul li {
+  margin: 30px 0;
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-radius: 5px;
+}
+
+.sidebar ul li a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar ul li span {
+  margin-left: 10px;
+  display: none;
+}
+
+.sidebar:hover ul li span {
+  display: inline;
+}
+
+.sidebar ul li:hover {
+  background-color: grey
+}
+
+.sidebar ul li.active {
+  background-color: #090909;
+
+}
+
+.sidebar ul li:hover a,
+.sidebar ul li.active a {
+  color: #fefdfd;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sidebar-logo {
+  width: 90px;
+  height: auto;
+  transition: transform 0.4s ease;
+}
+
+.sidebar:hover .sidebar-logo {
+  width: 100px;
+  transform: scale(1.5);
+  transition: transform 0.4s ease;
+}
+
+/* Toggle button for small screens */
+.toggle-button {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 30px;
+  color: white;
+  z-index: 2000;
+  cursor: pointer;
+}
+
+/* Dropdown styling for small screens */
+@media (max-width: 768px) {
+  .toggle-button {
+    display: block;
+  }
+
+  .sidebar {
+
+    top: 60px;
+    /* Adjust as needed for the dropdown */
+    left: 10px;
+    width: 30%;
+    /* Full width for mobile */
+    height: auto;
+    /* Adjust height when dropdown is active */
+    background-color: #030303;
+    display: none;
+    /* Hidden by default */
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: none;
+    z-index: 999;
+    transition: none;
+    opacity: 0.9;
+  }
+
+  .sidebar.dropdown {
+    display: flex;
+    /* Show the dropdown menu */
+    align-items: center;
+    justify-content: space-evenly;
+  }
+
+  .sidebar ul {
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+
+  .sidebar ul li {
+    margin: 10px;
+    /* Reduce margin for small screens */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Center the items */
+    width: 100%;
+  }
+
+  .sidebar ul li a {
+    text-align: center;
+    width: 100%;
+    padding: 10px 0;
+  }
+
+  .sidebar ul li span {
+    display: inline;
+    /* Always show text in mobile view */
+  }
+
+  .sidebar:hover .sidebar-logo {
+    width: 80px;
+    transform: scale(1.4);
+  }
+}

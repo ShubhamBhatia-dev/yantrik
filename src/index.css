@@ -1,0 +1,19 @@
+* {
+    font-family: "Fjalla One", sans-serif;
+}
+
+
+
+
+
+.font-400 {
+    font-family: "Fjalla One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.font-800 {
+    font-family: "Fjalla One", sans-serif;
+    font-weight: 800;
+    font-style: normal;
+}

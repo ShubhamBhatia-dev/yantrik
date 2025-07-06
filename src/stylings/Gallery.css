@@ -1,0 +1,223 @@
+/* -------------------- Base Layout -------------------- */
+.gallery-wrapper {
+  background-color: #000;
+  color: #fff;
+  padding: 40px 20px;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+}
+
+/* -------------------- Headings -------------------- */
+.gallery-heading {
+  text-align: center;
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.gallery-subheading {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #ccc;
+  margin: 0 auto 40px;
+  max-width: 600px;
+}
+
+/* -------------------- Gallery Grid -------------------- */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* -------------------- Gallery Item -------------------- */
+.gallery-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #1c1c1c;
+  transition: transform 0.3s ease;
+  height: 300px;
+  display: block;
+}
+
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* FULLSCREEN Overlay Inside Gallery Item */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  background-color: rgba(0, 0, 0, 0.65);
+  color: white;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  box-sizing: border-box;
+
+  /* Important fix */
+  pointer-events: none;
+  /* Ensures image click works */
+  z-index: 2;
+  overflow-y: auto;
+}
+
+/* Show overlay on hover */
+.gallery-item:hover .overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.overlay .title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  word-break: break-word;
+  max-width: 90%;
+}
+
+.overlay .category {
+  font-size: 0.85rem;
+  background: linear-gradient(45deg, orangered, orange);
+  color: #fff;
+  padding: 5px 14px;
+  border-radius: 30px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+
+/* -------------------- Modal -------------------- */
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  position: relative;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  animation: slideIn 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-img {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+.modal-content h2 {
+  padding: 20px;
+  margin: 0;
+  font-size: 1.8rem;
+  background: linear-gradient(45deg, orangered, orange);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-content p {
+  padding: 0 20px 20px;
+  font-size: 1rem;
+  color: #ccc;
+  line-height: 1.6;
+}
+
+/* -------------------- Close Button -------------------- */
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 25px;
+  color: #fff;
+  font-size: 35px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: orangered;
+}
+
+/* -------------------- Loading / Error -------------------- */
+.loader,
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-height: 50vh;
+  font-size: 1.2rem;
+  color: #ccc;
+}
+
+.error button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: linear-gradient(45deg, orangered, orange);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.error button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
+}
