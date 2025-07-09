@@ -73,7 +73,7 @@ const ThreeScene = () => {
         const animate = () => {
           requestAnimationFrame(animate);
           animateGears();
-          angle += 0.01; // Adjust speed here
+          angle += 0.0005; // Adjust speed here
 
           // Set camera position in a circle
           const radius = 10; // Adjust orbit radius
