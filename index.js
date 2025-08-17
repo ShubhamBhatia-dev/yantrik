@@ -4,7 +4,8 @@ import cors from "cors"
 import { config } from "dotenv"
 import path from 'path'
 import { fileURLToPath } from 'url'
-
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 config()
 
 const app = express()
@@ -15,6 +16,11 @@ app.use(express.json())
 connect(process.env.MONGODB).then(console.log("CONNECTED"))
 
 //SCHEMA DEFINITIONS :
+const userSchema = new Schema({
+    username: { type: String, unique: true },
+    password: String
+});
+const User = model('User', userSchema);
 const sessionSchema = new Schema({
     title: String,
     date: String,
@@ -59,7 +65,44 @@ const Event = model('Event', eventSchema);
 const Session = model('Session', sessionSchema)
 const TeamMember = model('TeamMember', teamMemberSchema);
 
+
+function authMiddleware(req, res, next) {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith("Bearer ")) return res.status(401).json({ message: "No token" });
+    const token = auth.split(" ")[1];
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch {
+        res.status(401).json({ message: "Invalid token" });
+    }
+}
 // ============= READ OPERATIONS (GET) =============
+
+// Register admin (run once, then remove or protect this route)
+app.post('/api/register', async (req, res) => {
+    const { username, password } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    try {
+        const user = new User({ username, password: hash });
+        await user.save();
+        res.json({ message: "Admin registered" });
+    } catch (err) {
+        res.status(400).json({ message: "User already exists" });
+    }
+});
+
+// Login
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(401).json({ message: "Invalid credentials" });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "2h" });
+    res.json({ token });
+});
 
 app.get("/api/sessions", async (req, res) => {
     try {
@@ -109,7 +152,7 @@ app.get('/api/team', async (req, res) => {
 
 // ============= CREATE OPERATIONS (POST) =============
 
-app.post('/api/sessions', async (req, res) => {
+app.post('/api/sessions', authMiddleware, async (req, res) => {
     try {
         const { title, date, description } = req.body;
         const session = new Session({ title, date, description });
@@ -120,7 +163,7 @@ app.post('/api/sessions', async (req, res) => {
     }
 });
 
-app.post('/api/events', async (req, res) => {
+app.post('/api/events', authMiddleware, async (req, res) => {
     try {
         const { title, description, imageUrl } = req.body;
         const event = new Event({ title, description, imageUrl });
@@ -131,7 +174,7 @@ app.post('/api/events', async (req, res) => {
     }
 });
 
-app.post('/api/projects', async (req, res) => {
+app.post('/api/projects', authMiddleware, async (req, res) => {
     try {
         const { title, description, image, details } = req.body;
         const project = new Project({ title, description, image, details });
@@ -142,7 +185,7 @@ app.post('/api/projects', async (req, res) => {
     }
 });
 
-app.post('/api/gallery', async (req, res) => {
+app.post('/api/gallery', authMiddleware, async (req, res) => {
     try {
         const { image, title, description, category } = req.body;
         const galleryItem = new Gallery({ image, title, description, category });
@@ -153,7 +196,7 @@ app.post('/api/gallery', async (req, res) => {
     }
 });
 
-app.post('/api/team', async (req, res) => {
+app.post('/api/team', authMiddleware, async (req, res) => {
     try {
         const { name, role, image, instagram, linkedin } = req.body;
         const teamMember = new TeamMember({ name, role, image, instagram, linkedin });
@@ -166,7 +209,7 @@ app.post('/api/team', async (req, res) => {
 
 // ============= UPDATE OPERATIONS (PUT) =============
 
-app.put('/api/sessions/:id', async (req, res) => {
+app.put('/api/sessions/:id', authMiddleware, async (req, res) => {
     try {
         const { title, date, description } = req.body;
         const updatedSession = await Session.findByIdAndUpdate(
@@ -183,7 +226,7 @@ app.put('/api/sessions/:id', async (req, res) => {
     }
 });
 
-app.put('/api/events/:id', async (req, res) => {
+app.put('/api/events/:id', authMiddleware, async (req, res) => {
     try {
         const { title, description, imageUrl } = req.body;
         const updatedEvent = await Event.findByIdAndUpdate(
@@ -200,7 +243,7 @@ app.put('/api/events/:id', async (req, res) => {
     }
 });
 
-app.put('/api/projects/:id', async (req, res) => {
+app.put('/api/projects/:id', authMiddleware, async (req, res) => {
     try {
         const { title, description, image, details } = req.body;
         const updatedProject = await Project.findByIdAndUpdate(
@@ -217,7 +260,7 @@ app.put('/api/projects/:id', async (req, res) => {
     }
 });
 
-app.put('/api/gallery/:id', async (req, res) => {
+app.put('/api/gallery/:id', authMiddleware, async (req, res) => {
     try {
         const { image, title, description, category } = req.body;
         const updatedGalleryItem = await Gallery.findByIdAndUpdate(
@@ -234,7 +277,7 @@ app.put('/api/gallery/:id', async (req, res) => {
     }
 });
 
-app.put('/api/team/:id', async (req, res) => {
+app.put('/api/team/:id', authMiddleware, async (req, res) => {
     try {
         const { name, role, image, instagram, linkedin } = req.body;
         const updatedTeamMember = await TeamMember.findByIdAndUpdate(
@@ -253,7 +296,7 @@ app.put('/api/team/:id', async (req, res) => {
 
 // ============= DELETE OPERATIONS (DELETE) =============
 
-app.delete('/api/sessions/:id', async (req, res) => {
+app.delete('/api/sessions/:id', authMiddleware, async (req, res) => {
     try {
         const deletedSession = await Session.findByIdAndDelete(req.params.id);
         if (!deletedSession) {
@@ -265,7 +308,7 @@ app.delete('/api/sessions/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/events/:id', async (req, res) => {
+app.delete('/api/events/:id', authMiddleware, async (req, res) => {
     try {
         const deletedEvent = await Event.findByIdAndDelete(req.params.id);
         if (!deletedEvent) {
@@ -277,7 +320,7 @@ app.delete('/api/events/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/projects/:id', async (req, res) => {
+app.delete('/api/projects/:id', authMiddleware, async (req, res) => {
     try {
         const deletedProject = await Project.findByIdAndDelete(req.params.id);
         if (!deletedProject) {
@@ -289,7 +332,7 @@ app.delete('/api/projects/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/gallery/:id', async (req, res) => {
+app.delete('/api/gallery/:id', authMiddleware, async (req, res) => {
     try {
         const deletedGalleryItem = await Gallery.findByIdAndDelete(req.params.id);
         if (!deletedGalleryItem) {
@@ -301,7 +344,7 @@ app.delete('/api/gallery/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/team/:id', async (req, res) => {
+app.delete('/api/team/:id', authMiddleware, async (req, res) => {
     try {
         const deletedTeamMember = await TeamMember.findByIdAndDelete(req.params.id);
         if (!deletedTeamMember) {
@@ -315,7 +358,7 @@ app.delete('/api/team/:id', async (req, res) => {
 
 // ============= GET SINGLE ITEM BY ID =============
 
-app.get('/api/sessions/:id', async (req, res) => {
+app.get('/api/sessions/:id', authMiddleware, async (req, res) => {
     try {
         const session = await Session.findById(req.params.id);
         if (!session) {
@@ -327,7 +370,7 @@ app.get('/api/sessions/:id', async (req, res) => {
     }
 });
 
-app.get('/api/events/:id', async (req, res) => {
+app.get('/api/events/:id', authMiddleware, async (req, res) => {
     try {
         const event = await Event.findById(req.params.id);
         if (!event) {
@@ -339,7 +382,7 @@ app.get('/api/events/:id', async (req, res) => {
     }
 });
 
-app.get('/api/projects/:id', async (req, res) => {
+app.get('/api/projects/:id', authMiddleware, async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
         if (!project) {
@@ -351,7 +394,7 @@ app.get('/api/projects/:id', async (req, res) => {
     }
 });
 
-app.get('/api/gallery/:id', async (req, res) => {
+app.get('/api/gallery/:id', authMiddleware, async (req, res) => {
     try {
         const galleryItem = await Gallery.findById(req.params.id);
         if (!galleryItem) {
@@ -363,7 +406,7 @@ app.get('/api/gallery/:id', async (req, res) => {
     }
 });
 
-app.get('/api/team/:id', async (req, res) => {
+app.get('/api/team/:id', authMiddleware, async (req, res) => {
     try {
         const teamMember = await TeamMember.findById(req.params.id);
         if (!teamMember) {

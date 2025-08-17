@@ -81,7 +81,8 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 25px 30px;
+            padding: 10px 30px;
+            margin-top: 25px;
             margin-bottom: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             display: flex;
@@ -407,6 +408,24 @@
             object-fit: cover;
         }
 
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ea4335;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .logout-btn:hover {
+            background: #d33b2c;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
@@ -434,7 +453,30 @@
 </head>
 
 <body>
-    <div class="dashboard-container">
+    <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2>Admin Login</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="dashboard-container" id="dashboard" style="display: none;">
         <div class="sidebar">
             <h2><i class="fas fa-tachometer-alt"></i> Admin Panel</h2>
             <div class="nav-item active" data-section="sessions">
@@ -501,6 +543,7 @@
         let currentSection = 'sessions';
         let currentAction = 'add';
         let currentItemId = null;
+        let authToken = null;
 
         // Section configurations
         const sectionConfigs = {
@@ -560,9 +603,43 @@
             }
         };
 
+        // Authentication helper function
+        function fetchWithAuth(url, options = {}) {
+            const token = sessionStorage.getItem('token') || authToken;
+            options.headers = options.headers || {};
+            if (token) {
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            return fetch(url, options);
+        }
+
+        // Check authentication status
+        function checkAuth() {
+            const token = sessionStorage.getItem('token');
+            if (token) {
+                authToken = token;
+                document.getElementById('login-modal').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'flex';
+                return true;
+            } else {
+                document.getElementById('login-modal').style.display = 'block';
+                document.getElementById('dashboard').style.display = 'none';
+                return false;
+            }
+        }
+
+        // Logout function
+        function logout() {
+            sessionStorage.removeItem('token');
+            authToken = null;
+            checkAuth();
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function () {
-            loadData();
+            if (checkAuth()) {
+                loadData();
+            }
             setupEventListeners();
         });
 
@@ -579,6 +656,37 @@
             document.getElementById('item-form').addEventListener('submit', function (e) {
                 e.preventDefault();
                 submitForm();
+            });
+
+            // Login form submission
+            document.getElementById('login-form').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+
+                try {
+                    const res = await fetch(`${API_BASE}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok && data.token) {
+                        sessionStorage.setItem('token', data.token);
+                        authToken = data.token;
+                        document.getElementById('login-modal').style.display = 'none';
+                        document.getElementById('dashboard').style.display = 'flex';
+                        loadData();
+                        showAlert('Login successful!', 'success');
+                    } else {
+                        showAlert(data.message || "Login failed", 'error');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showAlert("Login error. Please try again.", 'error');
+                }
             });
 
             // Modal close on outside click
@@ -607,11 +715,19 @@
         }
 
         async function loadData() {
+            if (!checkAuth()) return;
+
             const container = document.getElementById('data-container');
             container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
 
             try {
-                const response = await fetch(`${API_BASE}${sectionConfigs[currentSection].endpoint}`);
+                const response = await fetchWithAuth(`${API_BASE}${sectionConfigs[currentSection].endpoint}`);
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
                 const data = await response.json();
 
                 if (data.length === 0) {
@@ -678,7 +794,6 @@
 
             const modal = document.getElementById('modal');
             const title = document.getElementById('modal-title');
-            const form = document.getElementById('item-form');
 
             title.textContent = action === 'add' ? 'Add New Item' : 'Edit Item';
 
@@ -720,7 +835,13 @@
 
         async function loadItemData(itemId) {
             try {
-                const response = await fetch(`${API_BASE}${sectionConfigs[currentSection].endpoint}/${itemId}`);
+                const response = await fetchWithAuth(`${API_BASE}${sectionConfigs[currentSection].endpoint}/${itemId}`);
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
                 const data = await response.json();
 
                 // Populate form fields
@@ -755,13 +876,18 @@
                     method = 'PUT';
                 }
 
-                const response = await fetch(url, {
+                const response = await fetchWithAuth(url, {
                     method: method,
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(data)
                 });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
 
                 if (response.ok) {
                     showAlert(`Item ${currentAction === 'add' ? 'added' : 'updated'} successfully!`, 'success');
@@ -787,9 +913,14 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE}${sectionConfigs[currentSection].endpoint}/${itemId}`, {
+                const response = await fetchWithAuth(`${API_BASE}${sectionConfigs[currentSection].endpoint}/${itemId}`, {
                     method: 'DELETE'
                 });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
 
                 if (response.ok) {
                     showAlert('Item deleted successfully!', 'success');
@@ -813,7 +944,9 @@
             container.appendChild(alert);
 
             setTimeout(() => {
-                alert.remove();
+                if (alert.parentNode) {
+                    alert.remove();
+                }
             }, 5000);
         }
     </script>
